@@ -304,9 +304,7 @@ class CourseUnitMobileNotSupportedFragment : CourseUnitFragment() {
 
     private fun purchaseProduct(productId: String) {
         activity?.let { context ->
-            environment.loginPrefs.userId?.let { userId ->
-                billingProcessor?.purchaseItem(context, productId, userId)
-            }
+            billingProcessor?.purchaseItem(context, productId, environment.loginPrefs.userId)
         }
     }
 

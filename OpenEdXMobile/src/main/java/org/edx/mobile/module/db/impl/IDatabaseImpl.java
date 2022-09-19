@@ -38,10 +38,10 @@ public class IDatabaseImpl extends IDatabaseBaseImpl implements IDatabase {
         super(context);
     }
 
-    @Nullable
+    @NonNull
     private String username() {
         final String username = loginPrefs.getUsername();
-        return (username != null) ? Sha1Util.SHA1(username) : null;
+        return Sha1Util.SHA1(username);
     }
 
     @Override

@@ -28,7 +28,12 @@ import org.edx.mobile.module.prefs.LoginPrefs
 import org.edx.mobile.module.prefs.PrefManager
 import org.edx.mobile.user.UserAPI.AccountDataUpdatedCallback
 import org.edx.mobile.user.UserService
-import org.edx.mobile.util.*
+import org.edx.mobile.util.AppConstants
+import org.edx.mobile.util.BrowserUtil
+import org.edx.mobile.util.Config
+import org.edx.mobile.util.FileUtil
+import org.edx.mobile.util.ResourceUtil
+import org.edx.mobile.util.UserProfileUtils
 import org.edx.mobile.view.dialog.IDialogCallback
 import org.edx.mobile.view.dialog.NetworkCheckDialogFragment
 import org.edx.mobile.view.dialog.VideoDownloadQualityDialogFragment
@@ -83,9 +88,8 @@ class AccountFragment : BaseFragment() {
     private fun handleIntentBundle(bundle: Bundle?) {
         if (bundle != null) {
             @ScreenDef val screenName = bundle.getString(Router.EXTRA_SCREEN_NAME)
-            val username = loginPrefs.username
-            if (!screenName.isNullOrBlank() && !username.isNullOrBlank() && screenName == Screen.USER_PROFILE) {
-                environment.router.showUserProfile(requireContext(), username)
+            if (loginPrefs.isUserLoggedIn && screenName == Screen.USER_PROFILE) {
+                environment.router.showUserProfile(requireContext(), loginPrefs.username)
             }
         }
     }
@@ -100,7 +104,7 @@ class AccountFragment : BaseFragment() {
         initHelpFields()
 
         binding.containerPurchases.setVisibility(environment.appFeaturesPrefs.isIAPEnabled())
-        if (!loginPrefs.username.isNullOrBlank()) {
+        if (loginPrefs.isUserLoggedIn) {
             binding.btnSignOut.visibility = View.VISIBLE
             binding.btnSignOut.setOnClickListener {
                 environment.router.performManualLogout(
@@ -108,26 +112,26 @@ class AccountFragment : BaseFragment() {
                     environment.analyticsRegistry, environment.notificationDelegate
                 )
             }
+
+            config.deleteAccountUrl?.let { deleteAccountUrl ->
+                binding.containerDeleteAccount.visibility = View.VISIBLE
+                binding.btnDeleteAccount.setOnClickListener {
+                    environment.router.showAuthenticatedWebViewActivity(
+                        this.requireContext(),
+                        deleteAccountUrl, getString(R.string.title_delete_my_account), false
+                    )
+                    trackEvent(
+                        Analytics.Events.DELETE_ACCOUNT_CLICKED,
+                        Analytics.Values.DELETE_ACCOUNT_CLICKED
+                    )
+                }
+            }
         }
 
         binding.appVersion.text = String.format(
             "%s %s %s", getString(R.string.label_app_version),
             BuildConfig.VERSION_NAME, config.environmentDisplayName
         )
-
-        config.deleteAccountUrl?.let { deleteAccountUrl ->
-            binding.containerDeleteAccount.visibility = View.VISIBLE
-            binding.btnDeleteAccount.setOnClickListener {
-                environment.router.showAuthenticatedWebViewActivity(
-                    this.requireContext(),
-                    deleteAccountUrl, getString(R.string.title_delete_my_account), false
-                )
-                trackEvent(
-                    Analytics.Events.DELETE_ACCOUNT_CLICKED,
-                    Analytics.Values.DELETE_ACCOUNT_CLICKED
-                )
-            }
-        }
 
         environment.analyticsRegistry.trackScreenViewEvent(
             Analytics.Events.PROFILE_PAGE_VIEWED,
@@ -192,7 +196,7 @@ class AccountFragment : BaseFragment() {
     }
 
     private fun sendGetUpdatedAccountCall() {
-        loginPrefs.username?.let { username ->
+        loginPrefs.username.let { username ->
             getAccountCall = userService.getAccount(username)
             getAccountCall?.enqueue(
                 AccountDataUpdatedCallback(
@@ -206,53 +210,43 @@ class AccountFragment : BaseFragment() {
     }
 
     private fun initPersonalInfo() {
-        if (!config.isUserProfilesEnabled) {
+        if (!config.isUserProfilesEnabled || !loginPrefs.isUserLoggedIn) {
             binding.containerPersonalInfo.visibility = View.GONE
             return
         }
-        loginPrefs.let { prefs ->
-            prefs.currentUserProfile?.let { profileModel ->
-                if (!profileModel.email.isNullOrEmpty()) {
-                    binding.tvEmail.text = ResourceUtil.getFormattedString(
-                        resources,
-                        R.string.profile_email_description,
-                        AppConstants.EMAIL,
-                        profileModel.email
-                    )
-                } else {
-                    binding.tvEmail.visibility = View.GONE
-                }
 
-                if (!profileModel.username.isNullOrEmpty()) {
-                    binding.tvUsername.text = ResourceUtil.getFormattedString(
-                        resources,
-                        R.string.profile_username_description,
-                        AppConstants.USERNAME,
-                        profileModel.username
-                    )
-                } else {
-                    binding.tvUsername.visibility = View.GONE
-                }
+        binding.tvEmail.setVisibility(loginPrefs.userEmail.isNullOrEmpty().not())
+        binding.tvEmail.text = ResourceUtil.getFormattedString(
+            resources,
+            R.string.profile_email_description,
+            AppConstants.EMAIL,
+            loginPrefs.userEmail
+        )
 
-                binding.tvLimitedProfile.visibility =
-                    if (profileModel.hasLimitedProfile) View.VISIBLE else View.GONE
+        binding.tvUsername.setVisibility(loginPrefs.username.isNotEmpty())
+        binding.tvUsername.text = ResourceUtil.getFormattedString(
+            resources,
+            R.string.profile_username_description,
+            AppConstants.USERNAME,
+            loginPrefs.username
+        )
 
-                prefs.profileImage?.let { imageUrl ->
-                    Glide.with(requireContext())
-                        .load(imageUrl.imageUrlMedium)
-                        .into(binding.profileImage)
-                }
-                    ?: run { binding.profileImage.setImageResource(R.drawable.profile_photo_placeholder) }
-            }
-            binding.containerPersonalInfo.visibility = View.VISIBLE
-            binding.containerPersonalInfo.setOnClickListener {
-                trackEvent(
-                    Analytics.Events.PERSONAL_INFORMATION_CLICKED,
-                    Analytics.Values.PERSONAL_INFORMATION_CLICKED
-                )
-                environment.router.showUserProfile(requireActivity(), prefs.username ?: "")
-            }
-            setVideoQualityDescription(prefs.videoQuality)
+        binding.tvLimitedProfile.setVisibility(loginPrefs.currentUserProfile.hasLimitedProfile)
+
+        loginPrefs.profileImage?.let { imageUrl ->
+            Glide.with(requireContext())
+                .load(imageUrl.imageUrlMedium)
+                .into(binding.profileImage)
+        } ?: run { binding.profileImage.setImageResource(R.drawable.profile_photo_placeholder) }
+
+        binding.containerPersonalInfo.visibility = View.VISIBLE
+        binding.containerPersonalInfo.setOnClickListener {
+            trackEvent(
+                Analytics.Events.PERSONAL_INFORMATION_CLICKED,
+                Analytics.Values.PERSONAL_INFORMATION_CLICKED
+            )
+            environment.router.showUserProfile(requireActivity(), loginPrefs.username)
+            setVideoQualityDescription(loginPrefs.videoQuality)
         }
     }
 

@@ -352,11 +352,13 @@ class MyCoursesListFragment : OfflineSupportBaseFragment(), RefreshListener {
 
                 billingProcessor.queryPurchase { _, purchases ->
 
-                    if (purchases.isEmpty() || environment.loginPrefs.userId == null) return@queryPurchase
+                    if (purchases.isEmpty() || environment.loginPrefs.isUserLoggedIn.not()) {
+                        return@queryPurchase
+                    }
 
                     val purchasesList = purchases.filter {
-                        it.accountIdentifiers?.obfuscatedAccountId?.decodeToLong() ==
-                                environment.loginPrefs.userId
+                        environment.loginPrefs.userId == it.accountIdentifiers
+                            ?.obfuscatedAccountId?.decodeToLong()
                     }.associate { it.skus[0] to it.purchaseToken }.toList()
 
                     handleIncompletePurchasesFlow(verifiedCoursesSku, purchasesList)

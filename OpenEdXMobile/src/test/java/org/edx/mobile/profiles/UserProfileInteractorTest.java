@@ -87,7 +87,7 @@ public class UserProfileInteractorTest extends BaseTest {
 
     @Test
     public void isViewingOwnProfile_asUserBeingViewed_returnsTrue() {
-        setAuthenticatedUsername(ProfileValues.USERNAME);
+        setAuthenticatedUsername();
         configureBareMockAccount();
         createAndObserveInteractor();
         assertTrue(interactor.isViewingOwnProfile());
@@ -132,7 +132,7 @@ public class UserProfileInteractorTest extends BaseTest {
 
     @Test
     public void whenProfileObserved_withNoAboutMe_withPrivateAccount_asUserBeingViewed_emitsIncompleteProfileMessageAndContent() throws Exception {
-        setAuthenticatedUsername(ProfileValues.USERNAME);
+        setAuthenticatedUsername();
         final Account account = configureBareMockAccount();
         when(account.getAccountPrivacy()).thenReturn(Account.Privacy.PRIVATE);
         createAndObserveInteractor();
@@ -149,7 +149,7 @@ public class UserProfileInteractorTest extends BaseTest {
 
     @Test
     public void whenProfileObserved_withParentalConsentRequired_asUserBeingViewed_emitsParentalConsentRequired() {
-        setAuthenticatedUsername(ProfileValues.USERNAME);
+        setAuthenticatedUsername();
         final Account account = configureBareMockAccount();
         when(account.requiresParentalConsent()).thenReturn(true);
         createAndObserveInteractor();
@@ -303,9 +303,8 @@ public class UserProfileInteractorTest extends BaseTest {
         verifyNoMoreInteractions(profileObserver);
     }
 
-    private void setAuthenticatedUsername(@NonNull String username) {
-        final ProfileModel profileModel = new ProfileModel();
-        profileModel.username = username;
+    private void setAuthenticatedUsername() {
+        final ProfileModel profileModel = new ProfileModel(0, ProfileValues.USERNAME, "", null);
         when(userPrefs.getProfile()).thenReturn(profileModel);
     }
 
