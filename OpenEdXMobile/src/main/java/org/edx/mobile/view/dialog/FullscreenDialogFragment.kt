@@ -19,10 +19,10 @@ import org.edx.mobile.exception.ErrorMessage
 import org.edx.mobile.http.HttpStatus
 import org.edx.mobile.module.analytics.InAppPurchasesAnalytics
 import org.edx.mobile.util.InAppPurchasesException
-import org.edx.mobile.util.InAppPurchasesUtils
 import org.edx.mobile.util.NonNullObserver
 import org.edx.mobile.viewModel.InAppPurchasesViewModel
-import java.util.Calendar
+import org.edx.mobile.wraper.InAppPurchasesDialog
+import java.util.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -35,7 +35,7 @@ class FullscreenLoaderDialogFragment : DialogFragment() {
     lateinit var iapAnalytics: InAppPurchasesAnalytics
 
     @Inject
-    lateinit var iapUtils: InAppPurchasesUtils
+    lateinit var iapDialog: InAppPurchasesDialog
 
     private lateinit var binding: DialogFullscreenLoaderBinding
 
@@ -96,7 +96,7 @@ class FullscreenLoaderDialogFragment : DialogFragment() {
                         )
                         return@NonNullObserver
                     }
-                    else -> iapUtils.showPostUpgradeErrorDialog(
+                    else -> iapDialog.showPostUpgradeErrorDialog(
                         context = this,
                         errorCode = errorMsg.throwable.httpErrorCode,
                         errorMessage = errorMsg.throwable.errorMessage,
@@ -106,7 +106,7 @@ class FullscreenLoaderDialogFragment : DialogFragment() {
                     )
                 }
             } else {
-                iapUtils.showPostUpgradeErrorDialog(
+                iapDialog.showPostUpgradeErrorDialog(
                     context = this,
                     errorType = errorMsg.errorCode,
                     retryListener = { _, _ ->

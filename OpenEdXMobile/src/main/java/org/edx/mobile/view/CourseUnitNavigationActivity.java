@@ -277,7 +277,7 @@ public class CourseUnitNavigationActivity extends CourseBaseActivity implements
     @Override
     protected void onCourseRefreshError(Throwable error) {
         if (fullScreenLoader != null && fullScreenLoader.isAdded()) {
-            iapViewModel.setError(ErrorMessage.COURSE_REFRESH_CODE, error);
+            iapViewModel.dispatchError(0, ErrorMessage.COURSE_REFRESH_CODE, 0, null, 0, error);
         }
     }
 

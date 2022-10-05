@@ -7,7 +7,7 @@ import androidx.annotation.StringRes
  * handle exceptions/error based on errorCode
  */
 data class ErrorMessage(
-    val errorCode: Int,
+    val errorCode: Int = 0,
     val throwable: Throwable,
     @StringRes val errorResId: Int = 0
 ) {
@@ -23,5 +23,9 @@ data class ErrorMessage(
         const val PAYMENT_SDK_CODE = 0x204
         const val COURSE_REFRESH_CODE = 0x205
         const val PRICE_CODE = 0x206
+    }
+
+    fun canRetry(): Boolean {
+        return errorCode == PRICE_CODE;
     }
 }

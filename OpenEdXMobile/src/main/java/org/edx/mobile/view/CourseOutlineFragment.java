@@ -492,7 +492,7 @@ public class CourseOutlineFragment extends OfflineSupportBaseFragment
                     errorNotification.showError(getContext(), error);
                     logger.error(error, true);
                 } else if (fullscreenLoader != null && fullscreenLoader.isAdded()) {
-                    iapViewModel.setError(ErrorMessage.COURSE_REFRESH_CODE, error);
+                    iapViewModel.dispatchError(0, ErrorMessage.COURSE_REFRESH_CODE, 0, null, 0, error);
                 }
                 swipeContainer.setRefreshing(false);
                 // Remove bulk video download if the course has NO downloadable videos
