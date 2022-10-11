@@ -8,8 +8,11 @@ import android.view.ViewGroup
 import androidx.annotation.NonNull
 import androidx.annotation.Nullable
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import org.edx.mobile.BuildConfig
 import org.edx.mobile.R
 import org.edx.mobile.base.BaseFragment
@@ -32,11 +35,18 @@ import org.edx.mobile.util.AppConstants
 import org.edx.mobile.util.BrowserUtil
 import org.edx.mobile.util.Config
 import org.edx.mobile.util.FileUtil
+import org.edx.mobile.util.InAppPurchasesUtils
+import org.edx.mobile.util.NonNullObserver
 import org.edx.mobile.util.ResourceUtil
 import org.edx.mobile.util.UserProfileUtils
+import org.edx.mobile.view.dialog.AlertDialogFragment
+import org.edx.mobile.view.dialog.FullscreenLoaderDialogFragment
 import org.edx.mobile.view.dialog.IDialogCallback
 import org.edx.mobile.view.dialog.NetworkCheckDialogFragment
 import org.edx.mobile.view.dialog.VideoDownloadQualityDialogFragment
+import org.edx.mobile.viewModel.CourseViewModel
+import org.edx.mobile.viewModel.InAppPurchasesViewModel
+import org.edx.mobile.wraper.InAppPurchasesDialog
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import retrofit2.Call
@@ -59,7 +69,18 @@ class AccountFragment : BaseFragment() {
     @Inject
     lateinit var userService: UserService
 
+    @Inject
+    lateinit var iapDialog: InAppPurchasesDialog
+
     private var getAccountCall: Call<Account>? = null
+    private var verifiedCoursesSku: List<String> = arrayListOf()
+
+    private var incompletePurchases: MutableList<Pair<String, String>>? = null
+
+    private var loaderDialog: AlertDialogFragment? = null
+
+    private val courseViewModel: CourseViewModel by viewModels()
+    private val iapViewModel: InAppPurchasesViewModel by viewModels()
 
     companion object {
         @JvmStatic
@@ -104,7 +125,21 @@ class AccountFragment : BaseFragment() {
         updateSDCardSwitch()
         initHelpFields()
 
-        binding.containerPurchases.setVisibility(environment.config.isIAPEnabled)
+        if (environment.config.isIAPEnabled) {
+            initRestorePurchasesObservers()
+            binding.containerPurchases.setVisibility(true)
+            binding.btnRestorePurchases.setOnClickListener {
+                showLoader()
+                lifecycleScope.launch {
+                    courseViewModel.fetchEnrolledCourses(
+                        type = CourseViewModel.CoursesRequestType.STALE,
+                        showProgress = false
+                    )
+                }
+            }
+        } else {
+            binding.containerPurchases.setVisibility(false)
+        }
         if (!loginPrefs.username.isNullOrBlank()) {
             binding.btnSignOut.visibility = View.VISIBLE
             binding.btnSignOut.setOnClickListener {
@@ -140,10 +175,108 @@ class AccountFragment : BaseFragment() {
         )
     }
 
+    private fun initRestorePurchasesObservers() {
+        courseViewModel.enrolledCoursesResponse.observe(viewLifecycleOwner, NonNullObserver {
+            verifiedCoursesSku = InAppPurchasesUtils.getVerifiedCoursesSku(it)
+            if (verifiedCoursesSku.isEmpty().not()) {
+                environment.loginPrefs.userId?.let { userId ->
+                    iapViewModel.queryPurchases(userId)
+                }
+            } else {
+                showNoUnFulfilledPurchasesDialog()
+            }
+        })
+
+        courseViewModel.handleError.observe(viewLifecycleOwner, NonNullObserver {
+            dismissLoader(false)
+        })
+
+        iapViewModel.purchasesList.observe(viewLifecycleOwner) { purchases ->
+            incompletePurchases =
+                InAppPurchasesUtils.getInCompletePurchases(verifiedCoursesSku, purchases)
+            if (incompletePurchases?.isNotEmpty() == true) {
+                handleIncompletePurchasesFlow(false)
+            } else {
+                showNoUnFulfilledPurchasesDialog()
+            }
+        }
+
+        iapViewModel.purchaseFlowComplete.observe(
+            viewLifecycleOwner,
+            NonNullObserver { isPurchaseCompleted ->
+                if (isPurchaseCompleted) {
+                    handleIncompletePurchasesFlow(true)
+                }
+            })
+
+        iapViewModel.showFullscreenLoaderDialog.observe(
+            viewLifecycleOwner,
+            NonNullObserver { canShowLoader ->
+                if (canShowLoader) {
+                    val fullscreenLoader = FullscreenLoaderDialogFragment.newInstance()
+                    fullscreenLoader.show(childFragmentManager, FullscreenLoaderDialogFragment.TAG)
+                    iapViewModel.showFullScreenLoader(false)
+                }
+            })
+    }
+
+    private fun showNoUnFulfilledPurchasesDialog() {
+        dismissLoader(false)
+        AlertDialogFragment.newInstance(
+            getString(R.string.title_purchases_restored),
+            getString(R.string.message_purchases_restored),
+            getString(R.string.label_close),
+            null,
+            getString(R.string.label_get_help),
+        ) { _, _ ->
+            environment.router?.showFeedbackScreen(
+                requireActivity(),
+                getString(R.string.email_subject_upgrade_error)
+            )
+        }.show(childFragmentManager, null)
+    }
+
+    private fun handleIncompletePurchasesFlow(purchasesProcessed: Boolean) {
+        incompletePurchases?.let {
+            if (it.isNotEmpty()) {
+                environment.loginPrefs.userId?.let { userId ->
+                    incompletePurchases = iapViewModel.handleIncompletePurchasesFlow(
+                        requireActivity(),
+                        userId,
+                        it
+                    )
+                }
+            } else {
+                dismissLoader(purchasesProcessed)
+            }
+        }
+    }
+
+    private fun showLoader() {
+        loaderDialog = AlertDialogFragment.newInstance(
+            R.string.title_checking_purchases,
+            R.layout.alert_dialog_progress
+        )
+        loaderDialog?.isCancelable = false
+        loaderDialog?.showNow(childFragmentManager, null)
+    }
+
+    private fun dismissLoader(processedUnfulfilled: Boolean) {
+        loaderDialog?.dismiss()
+        if (processedUnfulfilled) {
+            iapDialog.showNewExperienceAlertDialog(this, { _, _ ->
+                iapViewModel.showFullScreenLoader(true)
+            }, { _, _ ->
+                handleIncompletePurchasesFlow(false)
+            })
+        }
+    }
+
     private fun initVideoQuality() {
         binding.containerVideoQuality.setOnClickListener {
             val videoQualityDialog: VideoDownloadQualityDialogFragment =
-                VideoDownloadQualityDialogFragment.getInstance(environment,
+                VideoDownloadQualityDialogFragment.getInstance(
+                    environment,
                     callback = object : VideoDownloadQualityDialogFragment.IListDialogCallback {
                         override fun onItemClicked(videoQuality: VideoQuality) {
                             setVideoQualityDescription(videoQuality)

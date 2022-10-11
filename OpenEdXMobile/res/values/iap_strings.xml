@@ -57,4 +57,10 @@
     <string name="sdn_dialog_title">Sanctions Compliance</string>
     <!-- Message for the dialog to verify SDN -->
     <string name="sdn_dialog_message">I certify that: (i) I (and any 3rd party paying for my course participation) am not on any government sanctions, exclusion, or export-controlled related restricted party list; and, (ii) I am not located in, or ordinarily resident in, any country or region that is subject to US, EU, or other applicable jurisdiction\'s laws and regulations preventing {platform_name} from providing me services there.</string>
+    <!-- Title of the dialog to while verifying the incomplete purchases -->
+    <string name="title_checking_purchases">Checking purchases\.\.\.</string>
+    <!-- Title of the Purchases successfully restored dialog -->
+    <string name="title_purchases_restored">Purchases have been successfully restored</string>
+    <!-- Message for the Purchases successfully restored dialog -->
+    <string name="message_purchases_restored">All purchases are up to date. If you’re not seeing your purchases restored, please try restarting your app to refresh the experience.</string>
 </resources>
