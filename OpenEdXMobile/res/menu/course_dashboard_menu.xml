@@ -9,10 +9,4 @@
         app:actionLayout="@layout/view_progress_download_btn"
         app:showAsAction="always" />
 
-    <item
-        android:id="@+id/menu_item_share"
-        android:icon="@drawable/abc_ic_menu_share_mtrl_alpha"
-        android:title="@string/share_course_button"
-        app:showAsAction="always" />
-
 </menu>

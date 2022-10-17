@@ -559,4 +559,25 @@
         <item name="android:windowExitAnimation">@anim/slide_down</item>
     </style>
 
+    <style name="CollapsingToolbarExpanded">
+        <item name="android:textColor">@color/neutralWhiteT</item>
+        <item name="fontFamily">?attr/fontSemiBold</item>
+        <item name="android:textSize">@dimen/edx_large</item>
+        <item name="background">@color/primaryLightColor</item>
+        <item name="android:gravity">left</item>
+        <item name="lineHeight">@dimen/widget_margin_x_double</item>
+    </style>
+
+    <style name="CollapsingToolbarCollapsed">
+        <item name="android:textColor">@color/neutralWhiteT</item>
+        <item name="fontFamily">?attr/fontSemiBold</item>
+        <item name="android:textSize">@dimen/edx_small</item>
+        <item name="android:textDirection">locale</item>
+        <item name="maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="background">@color/primaryLightColor</item>
+        <item name="android:gravity">left</item>
+        <item name="lineHeight">@dimen/widget_margin_double</item>
+    </style>
+
 </resources>

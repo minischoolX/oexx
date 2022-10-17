@@ -323,4 +323,7 @@
     <dimen name="fullscreen_margin_top">36dp</dimen>
     <dimen name="fullscreen_message_line_height">36dp</dimen>
 
+    <!-- Course Dashboard Toolbar -->
+    <dimen name="collapsed_toolbar_height">40dp</dimen>
+    <dimen name="expanded_toolbar_button_margin">13dp</dimen>
 </resources>

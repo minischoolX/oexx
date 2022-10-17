@@ -18,7 +18,15 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.databinding.DataBindingUtil;
+
+import com.facebook.shimmer.ShimmerFrameLayout;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textview.MaterialTextView;
 
 import org.edx.mobile.R;
 import org.edx.mobile.course.CourseAPI;
@@ -27,14 +35,18 @@ import org.edx.mobile.deeplink.ScreenDef;
 import org.edx.mobile.logger.Logger;
 import org.edx.mobile.model.FragmentItemModel;
 import org.edx.mobile.model.api.EnrolledCoursesResponse;
+import org.edx.mobile.model.course.EnrollmentMode;
 import org.edx.mobile.module.analytics.Analytics;
 import org.edx.mobile.module.analytics.AnalyticsRegistry;
 import org.edx.mobile.module.db.DataCallback;
 import org.edx.mobile.util.DateUtil;
 import org.edx.mobile.util.NetworkUtil;
 import org.edx.mobile.util.UiUtils;
+import org.edx.mobile.util.ViewAnimationUtil;
+import org.edx.mobile.util.images.CourseCardUtils;
 import org.edx.mobile.util.images.ShareUtils;
 import org.edx.mobile.view.custom.ProgressWheel;
+import org.edx.mobile.view.dialog.CourseModalDialogFragment;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -64,6 +76,15 @@ public class CourseTabsDashboardFragment extends TabsBaseFragment {
     private Runnable updateDownloadProgressRunnable;
     private MenuItem downloadsMenuItem;
 
+    private View upgradeBtn;
+    private ConstraintLayout expandedToolbar;
+    private Toolbar collapsedToolbar;
+    private AppCompatImageView expandedToolbarDismiss;
+    private AppCompatImageView courseShare;
+
+    private boolean isTitleCollapsed = false;
+    private boolean isTitleExpanded = true;
+
     @NonNull
     public static CourseTabsDashboardFragment newInstance(
             @Nullable EnrolledCoursesResponse courseData, @Nullable String courseId,
@@ -84,11 +105,6 @@ public class CourseTabsDashboardFragment extends TabsBaseFragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.course_dashboard_menu, menu);
-        if (environment.getConfig().isCourseSharingEnabled()) {
-            menu.findItem(R.id.menu_item_share).setVisible(true);
-        } else {
-            menu.findItem(R.id.menu_item_share).setVisible(false);
-        }
         handleDownloadProgressMenuItem(menu);
     }
 
@@ -97,8 +113,7 @@ public class CourseTabsDashboardFragment extends TabsBaseFragment {
                              Bundle savedInstanceState) {
         courseData = (EnrolledCoursesResponse) getArguments().getSerializable(Router.EXTRA_COURSE_DATA);
         if (courseData != null) {
-            // The case where we have valid course data
-            getActivity().setTitle(courseData.getCourse().getName());
+            setupToolbar();
             setHasOptionsMenu(courseData.getCourse().getCoursewareAccess().hasAccess());
             environment.getAnalyticsRegistry().trackScreenView(
                     Analytics.Screens.COURSE_DASHBOARD, courseData.getCourse().getId(), null);
@@ -127,6 +142,60 @@ public class CourseTabsDashboardFragment extends TabsBaseFragment {
         }
     }
 
+    public void setupToolbar() {
+        AppBarLayout appbar = getActivity().findViewById(R.id.appbar);
+
+        collapsedToolbar = getActivity().findViewById(R.id.collapsed_toolbar_layout);
+        MaterialTextView collapsedToolbarTitle = getActivity().findViewById(R.id.collapsed_toolbar_title);
+        AppCompatImageView collapsedToolbarDismiss = getActivity().findViewById(R.id.collapsed_toolbar_dismiss);
+
+        expandedToolbar = getActivity().findViewById(R.id.expanded_toolbar_layout);
+        expandedToolbarDismiss = getActivity().findViewById(R.id.expanded_toolbar_dismiss);
+        MaterialTextView courseOrg = getActivity().findViewById(R.id.course_organization);
+        MaterialTextView courseTitle = getActivity().findViewById(R.id.course_title);
+        MaterialTextView courseExpiryDate = getActivity().findViewById(R.id.course_expiry_date);
+        courseShare = getActivity().findViewById(R.id.course_share);
+        upgradeBtn = getActivity().findViewById(R.id.layout_upgrade_btn);
+        MaterialButton upgradeBtnText = upgradeBtn.findViewById(R.id.btn_upgrade);
+
+        collapsedToolbarTitle.setText(courseData.getCourse().getName());
+        courseOrg.setText(courseData.getCourse().getOrg());
+        courseTitle.setText(courseData.getCourse().getName());
+
+        String expiryDate = CourseCardUtils.getFormattedDate(requireContext(), courseData);
+        if (!TextUtils.isEmpty(expiryDate)) {
+            courseExpiryDate.setVisibility(View.VISIBLE);
+            courseExpiryDate.setText(expiryDate);
+        }
+
+        if (environment.getConfig().isCourseSharingEnabled()) {
+            courseShare.setVisibility(View.VISIBLE);
+            courseShare.setOnClickListener(v -> ShareUtils.showCourseShareMenu(getActivity(),
+                    courseShare, courseData, analyticsRegistry, environment));
+        }
+
+        collapsedToolbarDismiss.setOnClickListener(v -> getActivity().finish());
+        expandedToolbarDismiss.setOnClickListener(v -> getActivity().finish());
+
+        ((ShimmerFrameLayout) upgradeBtn).hideShimmer();
+        upgradeBtnText.setText(R.string.value_prop_course_card_message);
+        upgradeBtn.setVisibility(courseData.getMode().equalsIgnoreCase(EnrollmentMode.AUDIT.toString()) ? View.VISIBLE : View.GONE);
+        upgradeBtnText.setOnClickListener(view1 -> CourseModalDialogFragment.newInstance(
+                        Analytics.Screens.PLS_COURSE_DASHBOARD,
+                        courseData.getCourseId(),
+                        courseData.getCourseSku(),
+                        courseData.getCourse().getName(),
+                        courseData.getCourse().isSelfPaced())
+                .show(getChildFragmentManager(), CourseModalDialogFragment.TAG));
+
+        appbar.addOnOffsetChangedListener((appBarLayout, verticalOffset) -> {
+            int maxScroll = appBarLayout.getTotalScrollRange();
+            float percentage = (float) Math.abs(verticalOffset) / (float) maxScroll;
+            handleToolbarVisibility(collapsedToolbar, expandedToolbar, percentage);
+        });
+        ViewAnimationUtil.startAlphaAnimation(collapsedToolbar, View.INVISIBLE);
+    }
+
     private void fetchCourseById() {
         final String courseId = getArguments().getString(Router.EXTRA_COURSE_ID);
         courseApi.getEnrolledCourses().enqueue(new CourseAPI.GetCourseByIdCallback(getActivity(), courseId) {
@@ -147,18 +216,6 @@ public class CourseTabsDashboardFragment extends TabsBaseFragment {
                 }
             }
         });
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_item_share:
-                ShareUtils.showCourseShareMenu(getActivity(), getActivity().findViewById(R.id.menu_item_share),
-                        courseData, analyticsRegistry, environment);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
     }
 
     @Override
@@ -323,6 +380,42 @@ public class CourseTabsDashboardFragment extends TabsBaseFragment {
                     downloadsMenuItem.setVisible(false);
                 }
             }
+        }
+    }
+
+    private void handleToolbarVisibility(View collapsedToolbar, View expandedToolbar,
+                                         float percentage) {
+        final float PERCENTAGE_TO_SHOW_COLLAPSED_TOOLBAR = 0.9f;
+        final float PERCENTAGE_TO_HIDE_EXPANDED_TOOLBAR = 0.8f;
+
+        if (percentage >= PERCENTAGE_TO_SHOW_COLLAPSED_TOOLBAR) {
+            if (!isTitleCollapsed) {
+                ViewAnimationUtil.startAlphaAnimation(collapsedToolbar, View.VISIBLE);
+                isTitleCollapsed = true;
+            }
+        } else {
+            if (isTitleCollapsed) {
+                ViewAnimationUtil.startAlphaAnimation(collapsedToolbar, View.INVISIBLE);
+                isTitleCollapsed = false;
+            }
+        }
+
+        if (percentage >= PERCENTAGE_TO_HIDE_EXPANDED_TOOLBAR) {
+            if (isTitleExpanded) {
+                ViewAnimationUtil.startAlphaAnimation(expandedToolbar, View.INVISIBLE);
+                isTitleExpanded = false;
+            }
+            courseShare.setEnabled(false);
+            expandedToolbarDismiss.setEnabled(false);
+            upgradeBtn.setEnabled(false);
+        } else {
+            if (!isTitleExpanded) {
+                ViewAnimationUtil.startAlphaAnimation(expandedToolbar, View.VISIBLE);
+                isTitleExpanded = true;
+            }
+            courseShare.setEnabled(true);
+            expandedToolbarDismiss.setEnabled(true);
+            upgradeBtn.setEnabled(true);
         }
     }
 }
