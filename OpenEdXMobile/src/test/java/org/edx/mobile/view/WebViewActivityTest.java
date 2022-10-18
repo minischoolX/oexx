@@ -1,5 +1,9 @@
 package org.edx.mobile.view;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+
 import android.content.pm.PackageManager;
 import android.text.TextUtils;
 import android.view.View;
@@ -17,10 +21,6 @@ import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowWebView;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
 
 public class WebViewActivityTest extends BaseTestCase {
 
@@ -48,11 +48,11 @@ public class WebViewActivityTest extends BaseTestCase {
             throws PackageManager.NameNotFoundException {
         final WebViewActivity activity =
                 Robolectric.buildActivity(
-                    WebViewActivity.class,
-                    WebViewActivity.newIntent(
-                        RuntimeEnvironment.application, url, title
-                    )
-                ).setup().get();
+                        WebViewActivity.class,
+                        WebViewActivity.newIntent(
+                                RuntimeEnvironment.getApplication(), url, title
+                        )
+                ).create().get();
         final View contentView = Shadows.shadowOf(activity).getContentView();
         assertNotNull(contentView);
         final WebView webView = (WebView) contentView.findViewById(R.id.webView);
