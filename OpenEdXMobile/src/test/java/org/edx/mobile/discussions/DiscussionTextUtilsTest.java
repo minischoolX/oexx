@@ -116,7 +116,15 @@ public class DiscussionTextUtilsTest extends BaseTestCase {
                                                 IAuthorData input,
                                                 long now, String expectedOutput) {
         final Runnable listener = Mockito.mock(Runnable.class);
+        System.out.println("************************************************");
+        System.out.println(textView);
+        System.out.println(type);
+        System.out.println(input);
+        System.out.println(now);
+        System.out.println(listener);
         DiscussionTextUtils.setAuthorAttributionText(textView, type, input, now, listener);
+        System.out.println("************************************************");
+
         if (expectedOutput == null) {
             assertTrue(textView.getVisibility() == View.GONE);
         } else {

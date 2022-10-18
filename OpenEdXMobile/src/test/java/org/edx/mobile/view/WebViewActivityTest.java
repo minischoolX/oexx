@@ -20,9 +20,20 @@ import org.junit.Test;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
+import org.robolectric.android.controller.ActivityController;
 import org.robolectric.shadows.ShadowWebView;
 
 public class WebViewActivityTest extends BaseTestCase {
+
+    String url;
+    String title;
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        url = "https://www.edx.org";
+        title = "title";
+    }
 
     /**
      * Testing method for displaying web view dialog
@@ -31,9 +42,12 @@ public class WebViewActivityTest extends BaseTestCase {
     @Test
     public void test_StartWebViewActivity_LoadsUrlAndShowsTitle()
             throws PackageManager.NameNotFoundException {
-        final String url = "https://www.edx.org";
-        final String title = "title";
         test_StartWebViewActivity_LoadsUrlAndShowsTitle(url, title);
+    }
+
+    @Test
+    public void test_StartWebViewActivity_LoadsUrl()
+            throws PackageManager.NameNotFoundException {
         test_StartWebViewActivity_LoadsUrlAndShowsTitle(url, null);
     }
 
@@ -46,13 +60,24 @@ public class WebViewActivityTest extends BaseTestCase {
     private void test_StartWebViewActivity_LoadsUrlAndShowsTitle(@NonNull String url,
                                                                  @Nullable String title)
             throws PackageManager.NameNotFoundException {
-        final WebViewActivity activity =
+        System.out.println("************************************************");
+        System.out.println(RuntimeEnvironment.getApplication().getClass().getName());
+
+        ActivityController<WebViewActivity> controller =
                 Robolectric.buildActivity(
                         WebViewActivity.class,
                         WebViewActivity.newIntent(
-                                RuntimeEnvironment.getApplication(), url, title
+                                RuntimeEnvironment.application, url, title
                         )
-                ).create().get();
+                );
+        System.out.println(controller.getClass().getName());
+        controller = controller.setup();
+        System.out.println(controller.getClass().getName());
+        WebViewActivity activity = controller.get();
+        System.out.println(activity.getClass().getName());
+        System.out.println("************************************************");
+
+
         final View contentView = Shadows.shadowOf(activity).getContentView();
         assertNotNull(contentView);
         final WebView webView = (WebView) contentView.findViewById(R.id.webView);
