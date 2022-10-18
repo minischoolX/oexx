@@ -41,7 +41,7 @@ public class MainTabsDashboardFragment extends TabsBaseFragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.my_courses, menu);
+        inflater.inflate(R.menu.learn_screen_menu, menu);
         menu.findItem(R.id.menu_item_account).setVisible(true);
         menu.findItem(R.id.menu_item_account).setIcon(
                 UiUtils.INSTANCE.getDrawable(requireContext(), R.drawable.ic_settings,
@@ -70,34 +70,13 @@ public class MainTabsDashboardFragment extends TabsBaseFragment {
     public List<FragmentItemModel> getFragmentItems() {
         ArrayList<FragmentItemModel> items = new ArrayList<>();
 
-        items.add(new FragmentItemModel(MyCoursesListFragment.class,
-                getResources().getString(R.string.label_my_courses), R.drawable.ic_bookmark_border, getArguments(),
-                new FragmentItemModel.FragmentStateListener() {
-                    @Override
-                    public void onFragmentSelected() {
-                        environment.getAnalyticsRegistry().trackScreenView(Analytics.Screens.MY_COURSES);
-                    }
-                }));
-
-        if (environment.getConfig().getProgramConfig().isEnabled()) {
-            items.add(new FragmentItemModel(WebViewProgramFragment.class,
-                    getResources().getString(R.string.label_my_programs), R.drawable.ic_collections_bookmark,
-                    WebViewProgramFragment.makeArguments(environment.getConfig().getProgramConfig().getUrl(),
-                            null, true),
-                    new FragmentItemModel.FragmentStateListener() {
-                        @Override
-                        public void onFragmentSelected() {
-                            environment.getAnalyticsRegistry().trackScreenView(Analytics.Screens.MY_PROGRAM);
-                        }
-                    }));
-        }
+        items.add(new FragmentItemModel(LearnFragment.class,
+                getResources().getString(R.string.label_learn), R.drawable.ic_bookmark_border, getArguments(), null));
 
         if (environment.getConfig().getDiscoveryConfig().isDiscoveryEnabled()) {
             items.add(new FragmentItemModel(MainDiscoveryFragment.class,
                     getResources().getString(R.string.label_discovery), R.drawable.ic_search,
-                    getArguments(), () -> {
-                environment.getAnalyticsRegistry().trackScreenView(Analytics.Screens.FIND_COURSES);
-            }));
+                    getArguments(), () -> environment.getAnalyticsRegistry().trackScreenView(Analytics.Screens.FIND_COURSES)));
         }
 
         return items;

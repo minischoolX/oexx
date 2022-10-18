@@ -12,7 +12,7 @@ import static org.hamcrest.CoreMatchers.allOf;
 public class MyCoursesScreenInteractor {
     public MyCoursesScreenInteractor observeMyCoursesScreen() {
         // Look for "My Courses" title which (we assume) is only present on the landing screen
-        onView(allOf(isInActionBar(), withText(R.string.label_my_courses))).check(matches(isCompletelyDisplayed()));
+        onView(allOf(isInActionBar(), withText(R.string.label_learn))).check(matches(isCompletelyDisplayed()));
         return this;
     }
 
