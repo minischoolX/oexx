@@ -50,8 +50,14 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.jetbrains.annotations.NotNull;
 
+import org.edx.mobile.view.custom.cache.WebViewCache;
+import org.edx.mobile.view.custom.cache.WebViewCacheImpl;
+import org.edx.mobile.view.custom.cache.utils.LogUtils;
+
 import java.util.Arrays;
 import java.util.List;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.inject.Inject;
 
@@ -75,6 +81,14 @@ public class CourseUnitWebViewFragment extends CourseUnitFragment {
     private boolean forceReloadComponent = false;
     private FragmentAuthenticatedWebviewBinding binding;
     private AlertDialogFragment loaderDialog;
+
+    private static final String SCHEME_HTTP = "http";
+    private static final String SCHEME_HTTPS = "https";
+    private static final String METHOD_GET = "GET";
+    private WebViewCache mWebViewCache;
+    private int mWebViewCacheMode;
+    private String mUserAgent;
+    private String hostName;
 
     public static CourseUnitWebViewFragment newInstance(HtmlBlockModel unit, String courseName, String enrollmentMode, boolean isSelfPaced) {
         CourseUnitWebViewFragment fragment = new CourseUnitWebViewFragment();
@@ -112,6 +126,9 @@ public class CourseUnitWebViewFragment extends CourseUnitFragment {
         binding.swipeContainer.setEnabled(false);
         binding.authWebview.initWebView(getActivity(), true, false, true,
                 this::markComponentCompletion, null);
+        mWebViewCacheMode = binding.authWebview.getSettings().getCacheMode();
+        mUserAgent = binding.authWebview.getSettings().getUserAgentString();
+        mWebViewCache = new WebViewCacheImpl(getContext());
         binding.authWebview.getWebViewClient().setPageStatusListener(new URLInterceptorWebViewClient.IPageStatusListener() {
             @Override
             public void onPageStarted() {
@@ -144,6 +161,30 @@ public class CourseUnitWebViewFragment extends CourseUnitFragment {
 
             @Override
             public void onPageLoadProgressChanged(WebView webView, int progress) {
+            }
+        });
+
+        binding.authWebview.getWebViewClient().setWebResponseListener(new URLInterceptorWebViewClient.IWebResponseListener() {            
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView webView, WebResourceRequest request) {
+                String scheme = request.getUrl().getScheme().trim();
+                String method = request.getMethod().trim();
+//                try {
+//                    hostName = getDomainName(request.getUrl().toString());                    
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                    if (hostName == null) {
+//                        hostName = "edx.org";
+//                    }
+//                }
+//                String ownHost = "edx.org";
+                if ((TextUtils.equals(SCHEME_HTTP, scheme)
+                        || TextUtils.equals(SCHEME_HTTPS, scheme))
+                        && method.equalsIgnoreCase(METHOD_GET)) {
+//                        && method.equalsIgnoreCase(METHOD_GET) && hostName.contains(ownHost)) {
+                    return mWebViewCache.getResource(request, mWebViewCacheMode, mUserAgent);
+                }
+                return null;
             }
         });
 

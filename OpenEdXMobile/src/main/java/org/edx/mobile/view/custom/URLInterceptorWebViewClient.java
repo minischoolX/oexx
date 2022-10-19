@@ -59,6 +59,7 @@ public class URLInterceptorWebViewClient extends WebViewClient {
     private final boolean interceptAjaxRequest;
     private ActionListener actionListener;
     private IPageStatusListener pageStatusListener;
+    private IWebResponseListener webResponseListener;
     private String hostForThisPage = null;
     private boolean ajaxInterceptorEmbed = false;
     Config config;
@@ -117,6 +118,10 @@ public class URLInterceptorWebViewClient extends WebViewClient {
      */
     public void setPageStatusListener(IPageStatusListener pageStatusListener) {
         this.pageStatusListener = pageStatusListener;
+    }
+
+    public void setWebResponseListener(IWebResponseListener webResponseListener) {
+        this.webResponseListener = webResponseListener;
     }
 
     /**
@@ -299,6 +304,9 @@ public class URLInterceptorWebViewClient extends WebViewClient {
                 && NetworkUtil.isConnectedMobile(context)) {
             return new WebResourceResponse("text/html", StandardCharsets.UTF_8.name(), null);
         }
+        if (webResponseListener != null) {
+            return webResponceListener.shouldInterceptRequest(view, request);
+        }
         return super.shouldInterceptRequest(view, request);
     }
 
@@ -397,6 +405,10 @@ public class URLInterceptorWebViewClient extends WebViewClient {
          * @param progress Progress of the page being loaded.
          */
         void onPageLoadProgressChanged(WebView webView, int progress);
+    }
+
+    public interface IWebResponseListener {
+        WebResourceResponse shouldInterceptRequest(WebView webView, WebResourceRequest request);
     }
 
     public interface CompletionCallback {
