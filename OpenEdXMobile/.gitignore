@@ -1,6 +1,8 @@
 /edx.properties
 assets/config/config.yaml
 assets/config/config.json
+default_config/config.yaml
+default_config/local.yaml
 res/values/config.xml
 crashlytics.properties
 /res/raw/auth_config.json

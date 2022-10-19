@@ -85,7 +85,9 @@ public interface OkHttpClientProvider extends Provider<OkHttpClient> {
                 final OkHttpClient.Builder builder = new OkHttpClient.Builder();
                 List<Interceptor> interceptors = builder.interceptors();
                 if (usesOfflineCache) {
-                    final File cacheDirectory = new File(context.getFilesDir(), "http-cache");
+//                  TODO : cache convert this to external Files Dir
+                    final File cacheDirectory = new File(context.getExternalCacheDir(), "http-cache");
+//                    final File cacheDirectory = new File(context.getFilesDir(), "http-cache");
                     if (!cacheDirectory.exists()) {
                         cacheDirectory.mkdirs();
                     }
