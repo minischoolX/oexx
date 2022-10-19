@@ -8,7 +8,14 @@ import org.edx.mobile.core.EdxDefaultModule;
 import org.edx.mobile.logger.Logger;
 import org.edx.mobile.module.prefs.LoginPrefs;
 
+import org.edx.mobile.view.custom.cache.WebResource;
+import org.edx.mobile.view.custom.cache.loader.OkHttpResourceLoader;
+import org.edx.mobile.view.custom.cache.loader.ResourceLoader;
+import org.edx.mobile.view.custom.cache.loader.SourceRequest;
+
 import java.io.IOException;
+import java.util.Map;
+
 
 import dagger.hilt.android.EntryPointAccessors;
 import okhttp3.Interceptor;
