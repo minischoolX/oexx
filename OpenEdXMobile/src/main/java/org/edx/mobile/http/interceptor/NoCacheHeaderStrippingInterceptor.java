@@ -5,10 +5,12 @@ import androidx.annotation.NonNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import okhttp3.CacheControl;
 import okhttp3.Cookie;
 import okhttp3.CookieJar;
 import okhttp3.Headers;
@@ -111,8 +113,16 @@ public class NoCacheHeaderStrippingInterceptor implements Interceptor {
         if (cookies != null) {
             cookieJar.saveFromResponse(url, cookies);
         }
+
+        CacheControl cacheControl = new CacheControl.Builder()
+        .maxAge(365, TimeUnit.DAYS) // 12 months cache
+        .build();
+
         return response.newBuilder()
                 .headers(strippedHeadersBuilder.build())
+                .removeHeader("Pragma")
+                .removeHeader("Cache-Control")
+                .header("Cache-Control", cacheControl.toString())
                 .build();
     }
 }
