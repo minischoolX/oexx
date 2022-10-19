@@ -110,7 +110,7 @@ public class DiskResourceInterceptor implements Destroyable, ResourceInterceptor
             return webResource;
         }
         webResource = chain.process(request);
-        if (webResource != null && (webResource.isCacheByOurselves() || isRealMimeTypeCacheable(webResource))) {
+        if (webResource != null) {// && (webResource.isCacheByOurselves() || isRealMimeTypeCacheable(webResource))) {
             cacheToDisk(request.getKey(), webResource);
         }
         return webResource;
