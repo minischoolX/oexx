@@ -30,12 +30,12 @@ public class OfflineServerImpl implements OfflineServer {
 
     private List<ResourceInterceptor> buildForceModeChain(Context context, CacheConfig cacheConfig) {
         if (mForceModeChainList == null) {
-            int interceptorsCount = 0 + getBaseInterceptorsCount();
+            int interceptorsCount = 1 + getBaseInterceptorsCount();
             List<ResourceInterceptor> interceptors = new ArrayList<>(interceptorsCount);
             if (mBaseInterceptorList != null && !mBaseInterceptorList.isEmpty()) {
                 interceptors.addAll(mBaseInterceptorList);
             }
-//            interceptors.add(MemResourceInterceptor.getInstance(cacheConfig));
+            interceptors.add(MemResourceInterceptor.getInstance(cacheConfig));
 //            interceptors.add(new DiskResourceInterceptor(cacheConfig));
 //            interceptors.add(new ForceRemoteResourceInterceptor(context, cacheConfig));
             mForceModeChainList = interceptors;
@@ -61,7 +61,8 @@ public class OfflineServerImpl implements OfflineServer {
         boolean isForceMode = request.isForceMode();
         Context context = mContext;
         CacheConfig config = mCacheConfig;
-        List<ResourceInterceptor> interceptors = isForceMode ? buildForceModeChain(context, config) : buildDefaultModeChain(context);
+        List<ResourceInterceptor> interceptors = buildDefaultModeChain(context, config);
+//        List<ResourceInterceptor> interceptors = isForceMode ? buildForceModeChain(context, config) : buildDefaultModeChain(context);
         WebResource resource = callChain(interceptors, request);
         return mResourceResponseGenerator.generate(resource, request.getMime());
     }
