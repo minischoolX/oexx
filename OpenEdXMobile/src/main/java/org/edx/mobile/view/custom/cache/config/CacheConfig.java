@@ -45,7 +45,7 @@ public class CacheConfig {
 
     public static class Builder {
 
-        private static final String CACHE_DIR_NAME = "cached_webview_force";
+        private static final String CACHE_DIR_NAME = "auth-webview";
         private static final int DEFAULT_DISK_CACHE_SIZE = 100 * 1024 * 1024;
         private String cacheDir;
         private int version;
@@ -54,7 +54,7 @@ public class CacheConfig {
         private MimeTypeFilter filter = new DefaultMimeTypeFilter();
 
         public Builder(Context context) {
-            cacheDir = context.getCacheDir() + File.separator + CACHE_DIR_NAME;
+            cacheDir = context.getExternalCacheDir() + File.separator + CACHE_DIR_NAME;
             version = AppVersionUtil.getVersionCode(context);
         }
 
