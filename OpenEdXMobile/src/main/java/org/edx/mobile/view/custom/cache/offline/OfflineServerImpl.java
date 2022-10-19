@@ -61,7 +61,7 @@ public class OfflineServerImpl implements OfflineServer {
         boolean isForceMode = request.isForceMode();
         Context context = mContext;
         CacheConfig config = mCacheConfig;
-        List<ResourceInterceptor> interceptors = buildDefaultModeChain(context, config);
+        List<ResourceInterceptor> interceptors = buildDefaultModeChain(context);
 //        List<ResourceInterceptor> interceptors = isForceMode ? buildForceModeChain(context, config) : buildDefaultModeChain(context);
         WebResource resource = callChain(interceptors, request);
         return mResourceResponseGenerator.generate(resource, request.getMime());
