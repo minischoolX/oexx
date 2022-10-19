@@ -89,7 +89,7 @@ public class OkHttpResourceLoader implements ResourceLoader {
         Response response = null;
         try {
             WebResource remoteResource = new WebResource();
-            response = okHttpClientProvider.get.newCall(request).execute();
+            response = okHttpClientProvider.get().newCall(request).execute();
 //            response = client.newCall(request).execute();
             if (isInterceptorThisRequest(response)) {
                 remoteResource.setResponseCode(response.code());
