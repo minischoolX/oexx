@@ -15,6 +15,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
 
@@ -88,6 +89,9 @@ public class AuthenticatedWebView extends FrameLayout implements RefreshListener
     public WebView getWebView() {
         return binding.webview;
     }
+
+    public WebSettings getSettings() {
+        return binding.webview.getSettings();
 
     /**
      * Initialize the webview (must call it before loading some url).

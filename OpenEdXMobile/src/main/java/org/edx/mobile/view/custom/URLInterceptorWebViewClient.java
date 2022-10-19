@@ -305,7 +305,7 @@ public class URLInterceptorWebViewClient extends WebViewClient {
             return new WebResourceResponse("text/html", StandardCharsets.UTF_8.name(), null);
         }
         if (webResponseListener != null) {
-            return webResponceListener.shouldInterceptRequest(view, request);
+            return webResponseListener.shouldInterceptRequest(view, request);
         }
         return super.shouldInterceptRequest(view, request);
     }

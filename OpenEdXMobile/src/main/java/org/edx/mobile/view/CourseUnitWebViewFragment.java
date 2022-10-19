@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
@@ -126,6 +127,10 @@ public class CourseUnitWebViewFragment extends CourseUnitFragment {
         binding.swipeContainer.setEnabled(false);
         binding.authWebview.initWebView(getActivity(), true, false, true,
                 this::markComponentCompletion, null);
+        binding.authWebview.getSettings().setAllowFileAccess(true);
+        binding.authWebview.getSettings().setDefaultTextEncodingName("UTF-8");
+        binding.authWebview.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        binding.authWebview.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         mWebViewCacheMode = binding.authWebview.getSettings().getCacheMode();
         mUserAgent = binding.authWebview.getSettings().getUserAgentString();
         mWebViewCache = new WebViewCacheImpl(getContext());
