@@ -25,12 +25,12 @@ import okhttp3.Response;
 /**
  * Injects OAuth token - if present - into Authorization header
  **/
-public class OauthInterceptor implements ResourceInterceptor {
+public final class OauthInterceptor implements ResourceInterceptor {
     protected final Logger logger = new Logger(getClass().getName());
 
     private final LoginPrefs loginPrefs;
 
-    public OauthInterceptor(Context context) {
+    public OAuthInterceptor(Context context) {
         loginPrefs = EntryPointAccessors
                 .fromApplication(context, EdxDefaultModule.ProviderEntryPoint.class).getLoginPrefs();
     }
