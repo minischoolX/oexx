@@ -124,7 +124,8 @@ public class OkHttpResourceLoader implements ResourceLoader {
                     return createNoStoreCacheControl();
                 }
                 // tell okhttp that we are willing to receive expired cache.
-                return new CacheControl.Builder().maxStale(Integer.MAX_VALUE, TimeUnit.SECONDS).build();
+                return createNoStoreCacheControl();
+//                return new CacheControl.Builder().maxStale(Integer.MAX_VALUE, TimeUnit.SECONDS).build();
             case LOAD_NO_CACHE:
                 return CacheControl.FORCE_NETWORK;
             default: // LOAD_DEFAULT
