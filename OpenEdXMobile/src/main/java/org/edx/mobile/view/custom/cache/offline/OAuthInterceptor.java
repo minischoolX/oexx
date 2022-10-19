@@ -25,7 +25,7 @@ import okhttp3.Response;
 /**
  * Injects OAuth token - if present - into Authorization header
  **/
-public final class OauthInterceptor implements ResourceInterceptor {
+public class OauthInterceptor implements ResourceInterceptor {
     protected final Logger logger = new Logger(getClass().getName());
 
     private final LoginPrefs loginPrefs;
