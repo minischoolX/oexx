@@ -92,6 +92,7 @@ public class AuthenticatedWebView extends FrameLayout implements RefreshListener
 
     public WebSettings getSettings() {
         return binding.webview.getSettings();
+    }
 
     /**
      * Initialize the webview (must call it before loading some url).
