@@ -63,5 +63,8 @@ test-build
 *.keystore
 /OpenEdXMobile/signing/keystore.properties
 
+/OpenEdXMobile/default_config/config.yaml
+/OpenEdXMobile/default_config/local.yaml
+
 # reports directory
 /artifacts
