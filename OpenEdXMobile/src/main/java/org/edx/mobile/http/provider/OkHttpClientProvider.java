@@ -7,6 +7,8 @@ import androidx.annotation.NonNull;
 import org.edx.mobile.BuildConfig;
 import org.edx.mobile.R;
 import org.edx.mobile.http.authenticator.OauthRefreshTokenAuthenticator;
+import org.edx.mobile.http.interceptor.ForceCacheInterceptorNoNet;
+import org.edx.mobile.http.interceptor.ForceCacheInterceptorOnNet;
 import org.edx.mobile.http.interceptor.NewVersionBroadcastInterceptor;
 import org.edx.mobile.http.interceptor.NoCacheHeaderStrippingInterceptor;
 import org.edx.mobile.http.interceptor.OauthHeaderRequestInterceptor;
@@ -14,6 +16,7 @@ import org.edx.mobile.http.interceptor.StaleIfErrorHandlingInterceptor;
 import org.edx.mobile.http.interceptor.StaleIfErrorInterceptor;
 import org.edx.mobile.http.interceptor.UserAgentInterceptor;
 import org.edx.mobile.http.util.Tls12SocketFactory;
+import org.edx.mobile.util.NetworkUtil;
 
 import java.io.File;
 import java.util.List;
@@ -93,6 +96,11 @@ public interface OkHttpClientProvider extends Provider<OkHttpClient> {
                     }
                     final Cache cache = new Cache(cacheDirectory, cacheSize);
                     builder.cache(cache);
+                    if (!NetworkUtil.isConnected(context)) {
+                        interceptors.add(new ForceCacheInterceptorNoNet());
+                    } else {
+                        interceptors.add(new ForceCacheInterceptorOnNet());
+                    }
                     interceptors.add(new StaleIfErrorInterceptor());
                     interceptors.add(new StaleIfErrorHandlingInterceptor());
                     builder.networkInterceptors().add(new NoCacheHeaderStrippingInterceptor());
