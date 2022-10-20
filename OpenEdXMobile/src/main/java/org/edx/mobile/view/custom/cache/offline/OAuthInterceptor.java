@@ -37,7 +37,7 @@ public final class OAuthInterceptor implements ResourceInterceptor {
 
     @Override
     @NonNull
-    public WebResource intercept(Chain chain) throws IOException {
+    public WebResource load(Chain chain) throws IOException {
 //        final Request.Builder builder = chain.request().newBuilder();
         final CacheRequest request = chain.getRequest();
         SourceRequest sourceRequest = new SourceRequest(request, true);
