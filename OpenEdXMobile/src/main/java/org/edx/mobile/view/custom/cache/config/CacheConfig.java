@@ -45,7 +45,7 @@ public class CacheConfig {
 
     public static class Builder {
 
-        private static final String CACHE_DIR_NAME = "auth-webview";
+        private static final String CACHE_DIR_NAME = "http-cache";
         private static final int DEFAULT_DISK_CACHE_SIZE = 100 * 1024 * 1024;
         private String cacheDir;
         private int version;
